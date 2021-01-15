@@ -1,9 +1,42 @@
-import myLocation, { msg, name, getGreeting } from "./myModule";
-import sum, { subtract } from "./math";
+// @see http://spec.graphql.org/
+// @see https://graphql-demo.mead.io/
+// @see https://github.com/prisma-labs/graphql-yoga
 
-console.log(`Hello GraphQL, ${msg}, My Name is ${name}`);
-console.log(myLocation);
-console.log(getGreeting(name));
+import { GraphQLServer } from "graphql-yoga";
 
-console.log(sum(10, 5));
-console.log(subtract(10, 5));
+// Type definitions (Schema)
+const typeDefs = `
+    type Query {
+        hello: String!
+        name: String!
+        location: String!
+        bio: String!
+    }
+`;
+
+// Resolvers
+const resolvers = {
+  Query: {
+    hello() {
+      return "This is my first query!";
+    },
+    name() {
+      return "Jaehun";
+    },
+    location() {
+      return "Seoul";
+    },
+    bio() {
+      return "I live in Seoul and Student";
+    },
+  },
+};
+
+const server = new GraphQLServer({
+  typeDefs,
+  resolvers,
+});
+
+server.start(() => {
+  console.log("The server is up!");
+});
