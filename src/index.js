@@ -1,6 +1,7 @@
 // @see http://spec.graphql.org/
 // @see https://graphql-demo.mead.io/
 // @see https://github.com/prisma-labs/graphql-yoga
+import { GraphQLServer } from "graphql-yoga";
 
 // Scalar types = String, Boolean, Int, Float, ID
 
@@ -26,12 +27,35 @@ const users = [
   },
 ];
 
-import { GraphQLServer } from "graphql-yoga";
+const posts = [
+  {
+    id: "10",
+    title: "GraphQL 101",
+    body: "This is how to use GraphQL...",
+    published: true,
+    author: "1",
+  },
+  {
+    id: "11",
+    title: "GraphQL 101",
+    body: "This is an advanced GraphQL post...",
+    published: false,
+    author: "1",
+  },
+  {
+    id: "12",
+    title: "Programming Music",
+    body: "",
+    published: false,
+    author: "2",
+  },
+];
 
 // Type definitions (Schema)
 const typeDefs = `
     type Query {
       users(query: String): [User!]!
+      posts(query: String): [Post!]!
       me: User!
       post: Post!
     }
@@ -48,6 +72,7 @@ const typeDefs = `
       title: String!
       body: String!
       published: Boolean!
+      author: User!
     }
 `;
 
@@ -60,6 +85,20 @@ const resolvers = {
       return users.filter((user) =>
         user.name.toLowerCase().includes(args.query.toLowerCase())
       );
+    },
+    posts(parent, args, ctx, info) {
+      if (!args.query) return posts;
+
+      return posts.filter((post) => {
+        const isTitleMatch = post.title
+          .toLowerCase()
+          .includes(args.query.toLowerCase());
+        const isBodyMatch = post.title
+          .toLowerCase()
+          .includes(args.query.toLowerCase());
+
+        return isTitleMatch || isBodyMatch;
+      });
     },
     me() {
       return {
@@ -76,6 +115,11 @@ const resolvers = {
         body: "",
         published: false,
       };
+    },
+  },
+  Post: {
+    author(parent, args, ctx, info) {
+      return users.find((user) => user.id === parent.author);
     },
   },
 };
