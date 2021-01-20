@@ -1,120 +1,118 @@
 // @see http://spec.graphql.org/
 // @see https://graphql-demo.mead.io/
 // @see https://github.com/prisma-labs/graphql-yoga
+
+// Practice ...
 import { GraphQLServer } from "graphql-yoga";
 
-// Scalar types = String, Boolean, Int, Float, ID
-
-// Demo user data
+// Demo Datas
 const users = [
   {
     id: "1",
-    name: "Jaehun",
-    email: "jaehun@example.com",
+    name: "bangjaehun",
+    email: "qkdwogns98@gmail.com",
     age: 27,
   },
   {
     id: "2",
-    name: "Jimin",
+    name: "hwangjimin",
     email: "jimin@example.com",
     age: 28,
   },
   {
     id: "3",
-    name: "Jack",
-    email: "jack@example.com",
-    age: 31,
+    name: "jordanpeterson",
+    email: "peterson@example.com",
+    age: 59,
   },
 ];
 
 const posts = [
   {
-    id: "10",
+    id: "1",
     title: "GraphQL 101",
-    body: "This is how to use GraphQL...",
-    published: true,
+    body: "This is how to user GraphQL...",
+    pubished: true,
     author: "1",
   },
   {
-    id: "11",
-    title: "GraphQL 101",
-    body: "This is an advanced GraphQL post...",
-    published: false,
-    author: "1",
-  },
-  {
-    id: "12",
-    title: "Programming Music",
-    body: "",
-    published: false,
+    id: "2",
+    title: "Ailecompany",
+    body: "This is Ailecompany",
+    pubished: false,
     author: "2",
+  },
+  {
+    id: "3",
+    title: "12 Rules for Life",
+    body: "This is Legend",
+    pubished: true,
+    author: "3",
   },
 ];
 
 const comments = [
   {
-    id: "102",
+    id: "1",
     text: "This worked well for me. Thanks!",
+    author: "1",
+    post: "1",
+  },
+  {
+    id: "2",
+    text: "Conscientiousness!",
     author: "3",
-    post: "10",
+    post: "3",
   },
   {
-    id: "103",
-    text: "Glad you enjoyed it.",
-    author: "1",
-    post: "10",
-  },
-  {
-    id: "104",
-    text: "This did no work.",
+    id: "3",
+    text: "Awesome!",
     author: "2",
-    post: "11",
-  },
-  {
-    id: "105",
-    text: "Nevermind. I got it to work",
-    author: "1",
-    post: "11",
+    post: "2",
   },
 ];
 
-// Type definitions (Schema)
 const typeDefs = `
-    type Query {
-      users(query: String): [User!]!
-      posts(query: String): [Post!]!
-      comments: [Comment!]!
-      me: User!
-      post: Post!
-    }
+	type Query {
+		users(query: String): [User!]!
+		posts(query: String): [Post!]!
+		comments: [Comment!]!
+		me: User!
+		post: Post!
+	}
 
-    type User {
-      id: ID!
-      name: String!
-      email: String!
-      age: Int
-      posts: [Post!]!
-      Comments: [Comment!]!
-    }
+	type User {
+		id: ID!
+		name: String!
+		email: String!
+		age: Int!
+		posts: [Post!]!
+		comments: [Comment!]!
+	}
 
-    type Post {
-      id: ID!
-      title: String!
-      body: String!
-      published: Boolean!
-      author: User!
-      Comments: [Comment!]!
-    }
+	type Post {
+		id: ID!
+		title: String!
+		body: String!
+		published: Boolean!
+		author: User!
+		comments: [Comment!]!
+	}
 
-    type Comment {
-      id: ID!
-      text: String!
-      author: User!
-      post: Post!
-    }
+	type Comment {
+		id: ID!
+		text: String!
+		author: User!
+		post: Post!
+	}
 `;
 
-// Resolvers
+// query { users { posts { id title } } }
+// query { posts { author { name } } }
+// query { comments { id text author { name } } }
+// query { users { id name email age comments { id text } } }
+// query { comments { id text author { name } post { title } } }
+// query { posts { id title  comments { id text } } }
 const resolvers = {
   Query: {
     users(parent, args, ctx, info) {
@@ -131,7 +129,7 @@ const resolvers = {
         const isTitleMatch = post.title
           .toLowerCase()
           .includes(args.query.toLowerCase());
-        const isBodyMatch = post.title
+        const isBodyMatch = post.body
           .toLowerCase()
           .includes(args.query.toLowerCase());
 
@@ -140,10 +138,10 @@ const resolvers = {
     },
     me() {
       return {
-        id: "123098",
-        name: "Jimin",
-        email: "jimin@example.com",
-        age: 28,
+        id: "2",
+        name: "bangjaehun",
+        email: "qkdwogns98@gmail.com",
+        age: 27,
       };
     },
     post() {
@@ -151,21 +149,23 @@ const resolvers = {
         id: "092",
         title: "GraphQL 101",
         body: "",
-        published: false,
+        published: true,
       };
     },
-    comments() {
+    comments(parent, args, ctx, info) {
       return comments;
     },
   },
-  Post: {
-    author(parent, args, ctx, info) {
-      return users.find((user) => user.id === parent.author);
+
+  User: {
+    posts(parent, args, ctx, info) {
+      return posts.filter((post) => post.author === parent.id);
     },
     comments(parent, args, ctx, info) {
-      return comments.filter((comment) => comment.post === parent.id);
+      return comments.filter((comment) => comment.author === parent.id);
     },
   },
+
   Comment: {
     author(parent, args, ctx, info) {
       return users.find((user) => user.id === parent.author);
@@ -174,12 +174,13 @@ const resolvers = {
       return posts.find((post) => post.id === parent.post);
     },
   },
-  User: {
-    posts(parent, args, ctx, info) {
-      return posts.filter((post) => post.author === parent.id);
+
+  Post: {
+    author(parent, args, ctx, info) {
+      return users.find((user) => user.id === parent.author);
     },
     comments(parent, args, ctx, info) {
-      return comments.filter((comment) => comment.author === parent.id);
+      return comments.filter((comment) => comment.post === parent.id);
     },
   },
 };
@@ -189,6 +190,4 @@ const server = new GraphQLServer({
   resolvers,
 });
 
-server.start(() => {
-  console.log("The server is up!");
-});
+server.start(() => console.log("The Server is up"));
