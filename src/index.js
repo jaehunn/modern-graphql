@@ -2,15 +2,18 @@
 // @see https://graphql-demo.mead.io/
 // @see https://github.com/prisma-labs/graphql-yoga
 
-import { GraphQLServer } from "graphql-yoga";
+import { GraphQLServer, PubSub } from "graphql-yoga";
 
 import db from "./db";
 
 import Query from "./resolvers/Query";
 import Mutation from "./resolvers/Mutation";
-import User from "./resolvers/User ";
+import User from "./resolvers/User";
 import Comment from "./resolvers/Comment";
 import Post from "./resolvers/Post";
+import Subscription from "./resolvers/Subscription";
+
+const pubsub = new PubSub();
 
 // @see https://github.com/remy/nodemon
 const server = new GraphQLServer({
@@ -18,12 +21,14 @@ const server = new GraphQLServer({
   resolvers: {
     Query,
     Mutation,
+    Subscription,
     User,
     Comment,
     Post,
   },
   context: {
     db,
+    pubsub,
   },
 });
 
