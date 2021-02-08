@@ -1,10 +1,10 @@
-version: '3'
+version: "3"
 services:
   prisma:
     image: prismagraphql/prisma:1.12
     restart: always
     ports:
-    - "4466:4466"
+      - "4466:4466"
     environment:
       PRISMA_CONFIG: |
         port: 4466
@@ -16,7 +16,7 @@ services:
             host: ec2-34-237-236-32.compute-1.amazonaws.com
             port: '5432'
             database: darimrvmmjd0ao
-            schema: schema.graphql
+            ssl: true
             user: gkddrtdolxmnpa
             password: c6bdaec03c9a5ebd94801c3989ba566e00de2b99626c67daef12a4e7f96dc1fa
             migrations: true
