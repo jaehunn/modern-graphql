@@ -1,5 +1,5 @@
 # source: http://localhost:4466
-# timestamp: Thu Feb 18 2021 20:03:48 GMT+0900 (GMT+09:00)
+# timestamp: Fri Feb 19 2021 20:08:21 GMT+0900 (GMT+09:00)
 
 type AggregateComment {
   count: Int!
