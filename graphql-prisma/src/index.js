@@ -12,7 +12,7 @@ import User from "./resolvers/User";
 import Comment from "./resolvers/Comment";
 import Post from "./resolvers/Post";
 import Subscription from "./resolvers/Subscription";
-import "./prisma";
+import prisma from "./prisma";
 
 const pubsub = new PubSub();
 
@@ -30,6 +30,7 @@ const server = new GraphQLServer({
   context: {
     db,
     pubsub,
+    prisma,
   },
 });
 

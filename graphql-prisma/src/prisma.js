@@ -8,6 +8,8 @@ const prisma = new Prisma({
   endpoint: "http://localhost:4466",
 });
 
+export { prisma as default };
+
 // posts -> post (docs changed)
 // prisma.query.users(null, "{ id name email post { id title } }").then((data) => {
 //   console.log(JSON.stringify(data, undefined, 2));
@@ -62,50 +64,50 @@ const prisma = new Prisma({
 //     console.log(data);
 //   });
 
-prisma.exists
-  .Comment({
-    id: "cklaqezy300780941ribh226k",
-    author: {
-      id: "cklaq9r76003z09413eljjn0s",
-    },
-  })
-  .then((exists) => {
-    console.log(exists);
-  });
+// prisma.exists
+//   .Comment({
+//     id: "cklaqezy300780941ribh226k",
+//     author: {
+//       id: "cklaq9r76003z09413eljjn0s",
+//     },
+//   })
+//   .then((exists) => {
+//     console.log(exists);
+//   });
 
-// defs
-const createPostForUser = async (authorId, data) => {
-  const userExists = await prisma.exists.User({
-    id: authorId,
-  });
+// // defs
+// const createPostForUser = async (authorId, data) => {
+//   const userExists = await prisma.exists.User({
+//     id: authorId,
+//   });
 
-  if (!userExists) throw new Error("User not found.");
+//   if (!userExists) throw new Error("User not found.");
 
-  const post = await prisma.mutation.createPost(
-    {
-      data: {
-        ...data,
-        author: {
-          connect: {
-            id: authorId,
-          },
-        },
-      },
-    },
-    "{ author { id name email post { id title published } } }"
-  );
+//   const post = await prisma.mutation.createPost(
+//     {
+//       data: {
+//         ...data,
+//         author: {
+//           connect: {
+//             id: authorId,
+//           },
+//         },
+//       },
+//     },
+//     "{ author { id name email post { id title published } } }"
+//   );
 
-  // const user = await prisma.query.user(
-  //   {
-  //     where: {
-  //       id: authorId,
-  //     },
-  //   },
-  //   "{ id name email post { id title published } }"
-  // );
+//   // const user = await prisma.query.user(
+//   //   {
+//   //     where: {
+//   //       id: authorId,
+//   //     },
+//   //   },
+//   //   "{ id name email post { id title published } }"
+//   // );
 
-  return post.author;
-};
+//   return post.author;
+// };
 
 // createPostForUser("cklaq9r76003z09413eljjn0s", {
 //   title: "Great books to read",
@@ -119,37 +121,37 @@ const createPostForUser = async (authorId, data) => {
 //     console.log(err);
 //   });
 
-const updatePostForUser = async (postId, data) => {
-  const postExists = await prisma.exists.Post({
-    id: postId,
-  });
+// const updatePostForUser = async (postId, data) => {
+//   const postExists = await prisma.exists.Post({
+//     id: postId,
+//   });
 
-  if (!postExists) throw new Error("Post not found.");
+//   if (!postExists) throw new Error("Post not found.");
 
-  const post = await prisma.mutation.updatePost(
-    {
-      where: {
-        id: postId,
-      },
-      data,
-    },
-    "{ author { id name email post { id title published } } }"
-  );
+//   const post = await prisma.mutation.updatePost(
+//     {
+//       where: {
+//         id: postId,
+//       },
+//       data,
+//     },
+//     "{ author { id name email post { id title published } } }"
+//   );
 
-  // const user = await prisma.query.user(
-  //   {
-  //     where: {
-  //       id: post.author.id,
-  //     },
-  //   },
-  //   "{ id name email post { id title published } }"
-  // );
+//   // const user = await prisma.query.user(
+//   //   {
+//   //     where: {
+//   //       id: post.author.id,
+//   //     },
+//   //   },
+//   //   "{ id name email post { id title published } }"
+//   // );
 
-  return post.author;
-};
+//   return post.author;
+// };
 
-updatePostForUser("cklc830j9003d0941y1fa62ru", { published: true })
-  .then((user) => {
-    console.log(JSON.stringify(user, undefined, 2));
-  })
-  .catch((err) => console.log(err));
+// updatePostForUser("cklc830j9003d0941y1fa62ru", { published: true })
+//   .then((user) => {
+//     console.log(JSON.stringify(user, undefined, 2));
+//   })
+//   .catch((err) => console.log(err));
