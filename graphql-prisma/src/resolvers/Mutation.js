@@ -1,19 +1,12 @@
 import uuidv4 from "uuid";
 
 const Mutation = {
-  createUser(parent, args, { db }, info) {
-    const emailTaken = db.users.some((user) => user.email === args.data.email);
+  async createUser(parent, args, { prisma }, info) {
+    const emailTaken = await prisma.exists.User({ email: args.data.email });
 
-    if (emailTaken) return new Error(`Email Taken.`);
+    if (emailTaken) throw new Error("Email Taken.");
 
-    const user = {
-      id: uuidv4(),
-      ...args.data,
-    };
-
-    db.users.push(user);
-
-    return user;
+    return prisma.mutation.createUser({ data: args.data }, info);
   },
   updateUser(parent, { id, data }, { db }, info) {
     const user = db.users.find((user) => user.id === id);
@@ -30,32 +23,23 @@ const Mutation = {
 
     if (typeof data.name === "string") user.name = data.name;
 
-    // * 왜 number 체크를 하지않을까요
-    // age is not non-nullable (enable "null")
     if (typeof data.age !== "undefined") user.age = data.age;
 
     return user;
   },
-  deleteUser(parent, args, { db }, info) {
-    const userIndex = db.users.findIndex((user) => user.id === args.id);
+  async deleteUser(parent, args, { prisma }, info) {
+    const userExists = await prisma.exists.User({ id: args.id });
 
-    if (!~userIndex) throw new Error(`User not found.`);
+    if (!userExists) throw new Error("User not found.");
 
-    const deletedUsers = db.users.splice(userIndex, 1); // mutable method
-
-    db.posts = db.posts.filter((post) => {
-      const match = post.author === args.id;
-
-      if (match) {
-        db.comments = db.comments.filter((comment) => comment.post !== post.id); // deletedUser's post comments
-      }
-
-      return !match;
-    });
-
-    db.comments = db.comments.filter((comment) => comment.author !== args.id); // deletedUser's comments
-
-    return deletedUsers[0];
+    return prisma.mutation.deleteUser(
+      {
+        where: {
+          id: args.id,
+        },
+      },
+      info
+    );
   },
   createPost(parent, args, { db, pubsub }, info) {
     const userExists = db.users.some((user) => user.id === args.data.author);
@@ -145,12 +129,9 @@ const Mutation = {
   },
   createComment(parent, args, { db, pubsub }, info) {
     const userExists = db.users.some((user) => user.id === args.data.author);
-    const postExists = db.posts.some(
-      (post) => post.id === args.post && post.published
-    );
+    const postExists = db.posts.some((post) => post.id === args.post && post.published);
 
-    if (!userExists || !postExists)
-      throw new Error(`Unable to find user and post.`);
+    if (!userExists || !postExists) throw new Error(`Unable to find user and post.`);
 
     const comment = {
       id: uuidv4(),
@@ -169,9 +150,7 @@ const Mutation = {
     return comment;
   },
   deleteComment(parent, args, { db, pubsub }, info) {
-    const commentIndex = db.comments.findIndex(
-      (comment) => comment.id === args.id
-    );
+    const commentIndex = db.comments.findIndex((comment) => comment.id === args.id);
 
     if (!~commentIndex) throw new Error(`Comment not found.`);
 
