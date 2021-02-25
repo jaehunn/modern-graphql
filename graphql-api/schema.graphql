@@ -72,7 +72,7 @@ query {
 # 유니온 타입의 결과를 요청할 때
 query schedule {
   agenda {
-    # 인라인 프레그먼트: 익명의
+    # 인라인 프레그먼트: 익명
     # ...on [타입] 으로 분기
     ... on Workout {
       name
@@ -121,4 +121,255 @@ query Schedule {
   }
 }
 
-# 뮤테이션...
+# 뮤테이션
+mutation createSong {
+  # 필드
+  addSong(
+    # 뮤데이션 인자
+    title: "No Scrubs"
+    numberOne: true
+    performerName: "TLC"
+  ) {
+    # 셀렉션 세트
+    id
+    title
+    numberOne
+  }
+}
+
+# 쿼리 변수
+mutation createSong($title: String!, $numberOne: Int!, $by: String!) {
+  addSong(
+    #
+    title: $title
+    numberOne: $numberOne
+    performerName: $by
+  ) {
+    id
+    title
+    numberOne
+  }
+}
+
+# 서브스크립션: 데이터의 상태를 감지하도록 요청한다.
+# 구독 요청시 서버는 Lift 상태의 업데이트를 감지한다.
+# 새 탭을 열고 뮤테이션으로 데이터를 바꾸면 구독 중인 곳으로 상태 변경내용이 푸시된다.
+subscription {
+  liftStatusChange {
+    name
+    capacity
+    status
+  }
+}
+
+# 인트로스펙션: API 에서 사용할 수 있는 모든 타입을 볼 수 있다.
+query {
+  __schema {
+    types {
+      name
+      description
+    }
+  }
+}
+
+# Lift 타입 관련 쿼리를 작성하려고 할 때, 넣을 수 있는 필드 정보를 받아볼 수 있다.
+# 특정 타입의 세부사항만을 보고 싶다면 인자를 사용한다.
+query liftDetails {
+  # 타입 쿼리에 타입 인자명을 넘긴다.
+  __type(name: "Lift") {
+    name
+    field {
+      name
+      description
+      type {
+        name
+      }
+    }
+  }
+}
+
+# GraphQL API 를 처음 사용한다면 루트 타입에서 사용할 수 있는 필드를 알아보는 것이 좋다.
+query roots {
+  __schema {
+    queryType {
+      ...typeFields
+    }
+    mutationType {
+      ...typeFields
+    }
+    subscriptionType {
+      ...typeFields
+    }
+  }
+}
+
+fragment typeFields on __Type {
+  name
+  fields {
+    name
+  }
+}
+
+# AST: 추상구문트리, 쿼리를 요청하면, 쿼리 문자열 AST 로 파싱한다. AST 는 문자열보다 수정하기 쉽다. (데이터를 보고 싶다면 셀렉션 세트에 그냥 집어넣으면 된다.)
+# GraphQL 은 AST 를 횡단하며 쿼리와 스키마를 비교해 유효성을 검사한다. (쿼리 구문 오류, 스키마의 필드와 타입 검사)
+
+# 쿼리는 최소 하나의 정의(오퍼레이션, 프래그먼트 중 하나) 로 이루어진다.
+# 다음 쿼리는 오퍼레이션 정의 두개(query 와 mutation) 와 프래그먼트 정의 하나로 이루어져있다.
+query jazzCatStatus {
+  # Lift 필드는 jazzCatStatus 쿼리의 셀렉션 세트다.
+  # jazzCatStatus 쿼리는 셀렉션 세트 3개가 중첩되어있다.
+  Lift(id: "jazz-cat") {
+    name
+    night
+    elevationGain
+    trailAccess {
+      name
+      difficulty
+    }
+  }
+}
+
+mutation closeLift($lift: ID!) {
+  setLiftStatus(id: $lift, status: CLOSED) {
+    ...liftStatus
+  }
+}
+
+fragment liftStatus on Lift {
+  name
+  status
+}
+
+# GraphQL 스키마: 작업과 필드를 미리 정의하지 않으면 위에서 언급한 쿼리들( 쿼리, 뮤테이션, 구독) 을 사용할 수 가 없다.
+# GraphQL 은 SDL 을 지원한다 따라서 특정 언어나 프레임워크에 종속되지 않는다. (정의한 SDL 은 추후 클라이언트와 서버 사이에 유효성을 검사하는 데에 쓰인다.)
+
+# 타입 정의하기
+# GraphQL 타입은 커스텀 객체다. 사진을 공유하는 앱의 주요 타입은 User 와 Photo 가 될 것이다.
+# 타입에는 필드가 들어간다. 필드는 각 객체의 데이터와 관련이 있다. 특정 종류의 데이터를 반환한다.
+type Photo {
+  # ID 는 고유값이며 문자열이다.
+  id: ID!
+  name: String!
+  url: String!
+  # ! 은 null 값을 허용하지않는다는 의미다. 따라서 쿼리가 오면 반드시 데이터를 반환해야한다라는 의미를 내표한다. description 은 null 이 허용되므로 필수값이 아님을 의미한다.
+  description: String
+}
+
+# 스칼라 타입: Int Float String Boolean ID, 객체 타입이 아니므로 필드를 가지지 않는다. 커스텀 스칼라 타입을 정의하면 유효성 검사 방식을 지정할 수 있다.
+# 유효성 검사가 필요한 타입에는 커스텀 스칼라 타입을 사용한다. (graphql-custom-type 패키지)
+scalar DateTime
+
+type Photo {
+  id: ID!
+  name: String!
+  url: String!
+  description: String
+
+  # DateTime 은 커스텀 스칼라 타입으로 사진이 언제 생성됬는지 식별할 수 있다.
+  created: DateTime!
+}
+
+# 열거 타입: 스칼라 타입에 속하며 필드에서 반환하는 값을 제한할 수 있다.
+# PhotoCategory 타입은 아래 enum 값들 중 하나만을 반환할 수 있다.
+enum PhotoCategory {
+  SELFIE
+  PORTRAIT
+  ACTION
+  LANDSCAPE
+  GRAPHIC
+}
+
+type Photo {
+  id: ID!
+  name: String!
+  url: String!
+  description: String
+  created: DateTime!
+  category: PhotoCategory!
+}
+
+# 연결과 리스트
+# 일대일 연결
+type User {
+  githubLogin: ID!
+  name: String
+  avatar: String
+}
+
+type Photo {
+  id: ID!
+  name: String!
+  url: String!
+  description: String
+  created: DateTime!
+  category: PhotoCategory!
+  # postedBy 를 통해 Photo 에서 User 로 단방향 관계가 설정된다. 사진은 반드시 게시자(User) 가 있으므로 null 이 허용되지않는다.
+  postedBy: User!
+}
+
+# 타입의 관계는 어느 노드에서 횡단을 시작해도 상관없는 무방향이 좋다.
+type User {
+  githubLogin: ID!
+  name: String
+  avatar: String
+  # postedPhotos 는 다시 Photo 타입으로 돌아가는 경로다.
+  postedPhotos: [Photo!]!
+}
+
+# 일대다 연결, 부모 객체 필드에서 자식 객체 리스트를 반환하는 필드를 보유할 때 일대다 관계가 성립한다.
+# 루트 타입(Query) 에 관계를 정의한다.
+type Query {
+  totalPhotos: Int!
+  allPhotos: [Photo!]!
+  totalUsers: Int!
+  allUsers: [User!]!
+}
+
+# Query 타입을 schema 에 필드로 추가하면 GraphQL API 에서 query 를 사용할 수 있다.
+schema {
+  query: Query
+}
+
+query {
+  totalPhotos
+  allPhotos {
+    name
+    url
+  }
+}
+
+# 다대다 연결, 노드 리스트를 다른 노드 리스트와 연결지어야할 때 (두 개의 일대다 관계로 이루어진다.)
+# 사진 공유 앱에서 사용자가 사진을 게시하고 사진 속의 다른 사용자를 태그하는 기능을 생각해보면, 한 장의 사진에는 여러 사용자가 태그되고, 사용자는 여러 사진에 태그될 수 있다.
+# 다대다 연결 관계를 만드려면 User 와 Photo 타입에 리스트 타입 필드를 추가하면된다.
+type User {
+  githubLogin: ID!
+  name: String
+  avatar: String
+  postedPhotos: [Photo!]!
+  isPhotos: [Photo!]!
+}
+
+type Photo {
+  id: ID!
+  name: String!
+  url: String!
+  description: String
+  created: DateTime!
+  category: PhotoCategory!
+  postedBy: User!
+  taggedUsers: [User!]!
+}
+
+# 다대다 관계에서 관계 자체에 대한 정보를 담아 친구 관계를 통과 타입으로 설정할 수도 있다.
+type User {
+  # 이때 관계는 [User!]! 가 아니라 커스텀 객체 타입으로 정의해야한다. (친구 관계에 대한 정보)
+  friends: [Friendship!]!
+}
+
+type Friendship {
+  friends: [User!]!
+  howLong: Int!
+  whereWeMet: Location
+}
+
+# 여러 타입을 수용하는 리스트...
