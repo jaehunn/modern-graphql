@@ -1,6 +1,6 @@
 const Subscription = {
   count: {
-    subscribe(parent, args, { pubsub }, info) {
+    subscribe(parent, args, { prisma }, info) {
       let count = 0;
 
       setInterval(() => {
